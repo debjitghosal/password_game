@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultra Complex Password Game</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 450px;
+            text-align: center;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            margin-bottom: 15px;
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .rules {
+            text-align: left;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .rule {
+            margin: 8px 0;
+            display: none;
+        }
+
+        .rule.completed {
+            color: green;
+            text-decoration: line-through;
+        }
+
+        .rule.incomplete {
+            color: #d9534f;
+        }
+
+        .buttons {
+            margin-top: 20px;
+        }
+
+        .button {
+            padding: 10px 15px;
+            font-size: 16px;
+            color: white;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            width: 45%;
+            transition: background-color 0.3s ease;
+        }
+
+        .button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .button:hover:not(:disabled) {
+            background-color: #45a049;
+        }
+
+        .message {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Ultimate Password Challenge</h2>
+    <input type="text" id="passwordInput" placeholder="Enter a strong password">
+
+    <div class="rules" id="rulesContainer">
+        <!-- 30 rules will be displayed here -->
+    </div>
+
+    <div class="buttons">
+        <button id="submitButton" class="button" disabled>Submit</button>
+        <button id="resetButton" class="button" onclick="resetGame()">Reset</button>
+    </div>
+
+    <div class="message" id="message"></div>
+</div>
+
+<script>
+    const passwordInput = document.getElementById('passwordInput');
+    const submitButton = document.getElementById('submitButton');
+    const messageElement = document.getElementById('message');
+    const rulesContainer = document.getElementById('rulesContainer');
+
+    // Define 30 complex rules
+    const rules = [
+        { id: 'rule1', description: 'Must contain at least 1 number', test: password => /\d/.test(password) },
+        { id: 'rule2', description: 'Must contain at least 1 uppercase letter', test: password => /[A-Z]/.test(password) },
+        { id: 'rule3', description: 'Must be at least 12 characters long', test: password => password.length >= 12 },
+        { id: 'rule4', description: 'Must contain at least 1 special character (e.g., @, #, $, %)', test: password => /[!@#$%^&*(),.?":{}|<>]/.test(password) },
+        { id: 'rule5', description: 'Must not contain the word "password"', test: password => !/password/i.test(password) },
+        { id: 'rule6', description: 'Cannot contain consecutive repeating characters (e.g., "aa", "bb")', test: password => !/(.)\1/.test(password) },
+        { id: 'rule7', description: 'Must contain at least 3 different numbers', test: password => (password.match(/\d/g) || []).length >= 3 },
+        { id: 'rule8', description: 'Must not contain any common words like "admin" or "user"', test: password => !/(admin|user)/i.test(password) },
+        { id: 'rule9', description: 'Must not contain sequences like "123" or "abc"', test: password => !/(123|abc)/i.test(password) },
+        { id: 'rule10', description: 'Must start with a letter', test: password => /^[A-Za-z]/.test(password) },
+        { id: 'rule11', description: 'Must end with a number', test: password => /\d$/.test(password) },
+        { id: 'rule12', description: 'Must contain at least 2 special characters', test: password => (password.match(/[!@#$%^&*(),.?":{}|<>]/g) || []).length >= 2 },
+        { id: 'rule13', description: 'Must be at least 16 characters long', test: password => password.length >= 16 },
+        { id: 'rule14', description: 'Must contain alternating uppercase and lowercase letters', test: password => /([a-z][A-Z])|([A-Z][a-z])/.test(password) },
+        { id: 'rule15', description: 'Cannot contain your name', test: password => !/name/i.test(password) },
+        { id: 'rule16', description: 'Must include at least 1 symbol like %, &, *', test: password => /[%&*]/.test(password) },
+        { id: 'rule17', description: 'Must not contain your birth year (e.g., 1990)', test: password => !/\b(19[4-9]\d|20[0-2]\d)\b/.test(password) },
+        { id: 'rule18', description: 'Must contain at least 4 lowercase vowels', test: password => (password.match(/[aeiou]/g) || []).length >= 4 },
+        { id: 'rule19', description: 'Must not contain your favorite color (e.g., red, blue, etc.)', test: password => !/(red|blue|green|yellow|pink|purple)/i.test(password) },
+        { id: 'rule20', description: 'Must not contain any common words', test: password => !/(common|words)/i.test(password) },
+        { id: 'rule21', description: 'Must include at least one digit from 1 to 9', test: password => /[1-9]/.test(password) },
+        { id: 'rule22', description: 'Must not use consecutive numbers (e.g., 12, 34)', test: password => !/(012|123|234|345|456|567|678|789)/.test(password) },
+        { id: 'rule23', description: 'Must contain at least one uppercase letter followed by a lowercase letter', test: password => /[A-Z][a-z]/.test(password) },
+        { id: 'rule24', description: 'Must contain at least one lowercase letter followed by an uppercase letter', test: password => /[a-z][A-Z]/.test(password) },
+        { id: 'rule25', description: 'Must not include keyboard patterns like "qwerty"', test: password => !/(qwerty|asdf|zxcv)/i.test(password) },
+        { id: 'rule26', description: 'Must not contain any space characters', test: password => !/\s/.test(password) },
+        { id: 'rule27', description: 'Must include at least one uppercase letter and one lowercase letter', test: password => /[A-Z]/.test(password) && /[a-z]/.test(password) },
+        { id: 'rule28', description: 'Must be at least 20 characters long', test: password => password.length >= 20 },
+        { id: 'rule29', description: 'Must not contain more than two identical characters in a row', test: password => !/(.)\1{2}/.test(password) },
+        { id: 'rule30', description: 'Must include at least one number and one letter in the last four characters', test: password => /(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{4}$/.test(password) }
+    ];
+
+    let currentRule = 0;  // Tracks which rule is currently active
+
+    // Add all rules to the DOM in reverse order
+    for (let i = rules.length - 1; i >= 0; i--) {
+        const rule = rules[i];
+        const ruleElement = document.createElement('div');
+        ruleElement.id = rule.id;
+        ruleElement.className = 'rule incomplete';
+        ruleElement.textContent = `Rule ${rules.length - i}: ${rule.description}`;
+        rulesContainer.appendChild(ruleElement);
+    }
+
+    // Show the first rule when the game starts
+    showNextRule();
+
+    passwordInput.addEventListener('input', () => {
+        const password = passwordInput.value;
+
+        // Check the current rule
+        if (currentRule < rules.length) {
+            const rule = rules[currentRule];
+            if (rule.test(password)) {
+                document.getElementById(rule.id).classList.remove('incomplete');
+                document.getElementById(rule.id).classList.add('completed');
+                currentRule++;  // Move to the next rule
+                showNextRule(); // Show the next rule
+            }
+        }
+
+        // Enable submit button if all rules are completed
+        if (currentRule === rules.length) {
+            submitButton.disabled = false;
+            messageElement.textContent = "All rules satisfied! You can now submit.";
+        } else {
+            submitButton.disabled = true;
+            messageElement.textContent = ""; // Clear message
+        }
+    });
+
+    function showNextRule() {
+        if (currentRule < rules.length) {
+            document.getElementById(rules[currentRule].id).style.display = 'block'; // Show the current rule
+        }
+    }
+
+    function resetGame() {
+        passwordInput.value = '';
+        currentRule = 0;
+        messageElement.textContent = '';
+        submitButton.disabled = true;
+        
+        // Reset rules display
+        rules.forEach((rule) => {
+            document.getElementById(rule.id).classList.remove('completed', 'incomplete');
+            document.getElementById(rule.id).style.display = 'none'; // Hide all rules
+        });
+
+        // Show the first rule
+        showNextRule();
+    }
+</script>
+
+</body>
+</html>
